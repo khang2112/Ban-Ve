@@ -31,7 +31,7 @@ public class PNL_KhachHang extends JPanel implements ActionListener, MouseListen
         public PosButton(String text, Color bg, Color fg) {
             super(text);
             this.bgColor = bg;
-            setBackground(bg); // FIX: HIỂN THỊ MÀU NGAY KHI LOAD
+            setBackground(bg); 
             setFont(new Font("Segoe UI", Font.BOLD, 14));
             setForeground(fg);
             setFocusPainted(false);
@@ -172,6 +172,14 @@ public class PNL_KhachHang extends JPanel implements ActionListener, MouseListen
         btnXoaRong.addActionListener(this);
         table.addMouseListener(this);
         
+        // --- FIX: CẢM BIẾN TỰ ĐỘNG TẢI LẠI ĐIỂM ---
+        this.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentShown(ComponentEvent e) {
+                loadDataToTable(); // Cứ mở tab lên là quét điểm mới nhất
+            }
+        });
+
         loadDataToTable();
     }
 

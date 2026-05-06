@@ -1,8 +1,9 @@
 package ui;
 
 import dao.HoaDonDAO;
+import dao.CTHD_DAO;
 import entity.HoaDon;
-import entity.VePhim;
+import entity.ChiTietHoaDon;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -23,8 +24,8 @@ public class PNL_HoaDon extends JPanel implements MouseListener {
     private DefaultTableModel modelChiTiet;
     private JTable tblChiTiet;
     private HoaDonDAO hoaDonDAO;
+    private CTHD_DAO cthdDAO;
 
-    // --- BẢNG MÀU CHỦ ĐỀ ĐỎ (NETFLIX / CGV THEME) ---
     private Color bgDark = new Color(18, 18, 18);
     private Color bgPanel = new Color(30, 30, 30);
     private Color textWhite = new Color(240, 240, 240);
@@ -32,14 +33,12 @@ public class PNL_HoaDon extends JPanel implements MouseListener {
 
     public PNL_HoaDon() {
         hoaDonDAO = new HoaDonDAO();
+        cthdDAO = new CTHD_DAO();
         
         setLayout(new BorderLayout(15, 15));
         setBackground(bgDark);
         setBorder(new EmptyBorder(15, 20, 20, 20));
 
-        // ==========================================
-        // 1. PHẦN TRÊN: DANH SÁCH HÓA ĐƠN
-        // ==========================================
         JPanel pnlTop = new JPanel(new BorderLayout());
         pnlTop.setBackground(bgPanel);
         TitledBorder borderHD = BorderFactory.createTitledBorder(
@@ -68,18 +67,16 @@ public class PNL_HoaDon extends JPanel implements MouseListener {
         pnlTop.add(scrollHD, BorderLayout.CENTER);
         add(pnlTop, BorderLayout.NORTH);
 
-        // ==========================================
-        // 2. PHẦN DƯỚI: CHI TIẾT VÉ PHIM
-        // ==========================================
         JPanel pnlBottom = new JPanel(new BorderLayout());
         pnlBottom.setBackground(bgPanel);
         TitledBorder borderCT = BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(new Color(70, 70, 70)), "CHI TIẾT VÉ PHIM (Click chọn Hóa Đơn ở trên để xem)",
+                BorderFactory.createLineBorder(new Color(70, 70, 70)), "CHI TIẾT HÓA ĐƠN",
                 TitledBorder.LEFT, TitledBorder.TOP, new Font("Segoe UI", Font.BOLD, 14), themeRed
         );
         pnlBottom.setBorder(BorderFactory.createCompoundBorder(borderCT, new EmptyBorder(5, 5, 5, 5)));
 
-        String[] colsCT = {"Mã Vé", "Mã Suất Chiếu", "Ghế", "Giá Vé"};
+        // --- ĐỔI CỘT CHO ĐÚNG BẢNG CTHD ---
+        String[] colsCT = {"Mã Hóa Đơn", "Mã Suất Chiếu", "Số Lượng Vé", "Đơn Giá", "Thành Tiền"};
         modelChiTiet = new DefaultTableModel(colsCT, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
@@ -87,7 +84,11 @@ public class PNL_HoaDon extends JPanel implements MouseListener {
         tblChiTiet = new JTable(modelChiTiet);
         setupTableStyle(tblChiTiet);
 
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+        tblChiTiet.getColumnModel().getColumn(2).setCellRenderer(centerRenderer); // Căn giữa cột Số lượng
         tblChiTiet.getColumnModel().getColumn(3).setCellRenderer(rightRenderer); 
+        tblChiTiet.getColumnModel().getColumn(4).setCellRenderer(rightRenderer); 
 
         JScrollPane scrollCT = new JScrollPane(tblChiTiet);
         scrollCT.getViewport().setBackground(bgPanel);
@@ -98,12 +99,11 @@ public class PNL_HoaDon extends JPanel implements MouseListener {
 
         tblHoaDon.addMouseListener(this);
         
-        // --- FIX: GẮN CẢM BIẾN TỰ ĐỘNG CẬP NHẬT KHI MỞ TAB ---
         this.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentShown(ComponentEvent e) {
-                loadDataHoaDon(); // Quét Hóa đơn mới nhất
-                modelChiTiet.setRowCount(0); // Làm sạch bảng chi tiết cũ
+                loadDataHoaDon(); 
+                modelChiTiet.setRowCount(0); 
             }
         });
 
@@ -142,10 +142,7 @@ public class PNL_HoaDon extends JPanel implements MouseListener {
             }
             
             modelHoaDon.addRow(new Object[]{
-                hd.getMaHD(), 
-                hd.getMaNV(), 
-                ngayLap, 
-                nf.format(hd.getTongTien()) + " đ"
+                hd.getMaHD(), hd.getMaNV(), ngayLap, nf.format(hd.getTongTien()) + " đ"
             });
         }
     }
@@ -157,15 +154,17 @@ public class PNL_HoaDon extends JPanel implements MouseListener {
             String maHD = modelHoaDon.getValueAt(row, 0).toString();
             modelChiTiet.setRowCount(0); 
             
-            ArrayList<VePhim> dsVe = hoaDonDAO.layChiTietVe(maHD);
+            // --- GỌI CTHD_DAO LẤY THÔNG TIN ĐỔ LÊN BẢNG ---
+            ArrayList<ChiTietHoaDon> dsCTHD = cthdDAO.layChiTietHoaDon(maHD);
             NumberFormat nf = NumberFormat.getInstance(new Locale("vi", "VN"));
 
-            for (VePhim ve : dsVe) {
+            for (ChiTietHoaDon cthd : dsCTHD) {
                 modelChiTiet.addRow(new Object[]{
-                    ve.getMaVe(), 
-                    ve.getMaSuat(), 
-                    ve.getMaGhe(), 
-                    nf.format(ve.getGiaVe()) + " đ"
+                    cthd.getMaHD(), 
+                    cthd.getMaSuat(), 
+                    cthd.getSoLuong() + " Vé", 
+                    nf.format(cthd.getGiaVe()) + " đ",
+                    nf.format(cthd.getThanhTien()) + " đ"
                 });
             }
         }

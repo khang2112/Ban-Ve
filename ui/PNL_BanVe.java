@@ -38,6 +38,9 @@ public class PNL_BanVe extends JPanel implements ActionListener {
     private ArrayList<String> gheDangChon = new ArrayList<>();
     private double giaVeHienTai = 80000; 
     
+    // --- FIX: CỜ CHẶN RESET DỮ LIỆU ---
+    private boolean isTuDongChon = false;
+    
     private HoaDonDAO hoaDonDAO = new HoaDonDAO();
     private KhachHangDAO khachHangDAO = new KhachHangDAO(); 
     private SuatChieuDAO suatChieuDAO = new SuatChieuDAO();
@@ -256,9 +259,16 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         btnThanhToan.addActionListener(this);
         btnHuy.addActionListener(this);
         
+        // --- FIX: CẢM BIẾN TẢI LẠI TRANG CHỈ KHI KHÔNG TỰ ĐỘNG CHỌN ---
         this.addComponentListener(new ComponentAdapter() {
             @Override
-            public void componentShown(ComponentEvent e) { loadDuLieuVaoBoNho(); }
+            public void componentShown(ComponentEvent e) {
+                if (isTuDongChon) {
+                    isTuDongChon = false; // Tắt cờ, không reset data
+                } else {
+                    loadDuLieuVaoBoNho(); // Nếu bấm thủ công vào tab Bán Vé thì nạp mới
+                }
+            }
         });
     }
 
@@ -593,9 +603,11 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         }
     }
     
-    // FIX: HÀM TỰ ĐỘNG CHỌN XỬ LÝ ĐỒNG BỘ MƯỢT MÀ
+    // --- FIX: THIẾT LẬP CỜ CHẶN RESET KHI TỰ ĐỘNG CHỌN TỪ SUẤT CHIẾU ---
     public void tuDongChonSuat(String tenPhim, String ngayChieuYYYYMMDD, String maSuat) {
-        loadDuLieuVaoBoNho(); 
+        isTuDongChon = true; // Bật cờ chặn ComponentShown
+        loadDuLieuVaoBoNho(); // Đổ Data mới lên trước
+        
         try {
             java.time.LocalDate date = java.time.LocalDate.parse(ngayChieuYYYYMMDD);
             String ngayChieuDDMMYYYY = date.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));

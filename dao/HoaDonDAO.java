@@ -31,7 +31,7 @@ public class HoaDonDAO {
             }
             pstHD.executeUpdate();
 
-            // 2. LƯU VÉ PHIM
+            // 2. LƯU VÉ PHIM (CHI TIẾT VỊ TRÍ GHẾ)
             String sqlVe = "INSERT INTO VePhim (MaHD, MaSuat, MaGhe, GiaVe) VALUES (?, ?, ?, ?)";
             PreparedStatement pstVe = con.prepareStatement(sqlVe);
             for (String ghe : danhSachGhe) {
@@ -42,7 +42,17 @@ public class HoaDonDAO {
                 pstVe.executeUpdate();
             }
 
-            // 3. TÍCH ĐIỂM TỰ ĐỘNG
+            // 3. LƯU CHI TIẾT HÓA ĐƠN (YÊU CẦU CỦA THẦY CÔ)
+            String sqlCTHD = "INSERT INTO ChiTietHoaDon (MaHD, MaSuat, SoLuong, GiaVe, ThanhTien) VALUES (?, ?, ?, ?, ?)";
+            PreparedStatement pstCTHD = con.prepareStatement(sqlCTHD);
+            pstCTHD.setString(1, maHD);
+            pstCTHD.setString(2, maSuat);
+            pstCTHD.setInt(3, danhSachGhe.size()); // Số lượng vé = kích thước mảng ghế
+            pstCTHD.setDouble(4, giaVe);
+            pstCTHD.setDouble(5, tongTien);
+            pstCTHD.executeUpdate();
+
+            // 4. TÍCH ĐIỂM
             if (maKH != null && !maKH.trim().isEmpty()) {
                 int diemCong = (int) (tongTien / 10000); 
                 String sqlDiem = "UPDATE KhachHang SET DiemTichLuy = DiemTichLuy + ? WHERE MaKH = ?";
@@ -71,7 +81,6 @@ public class HoaDonDAO {
             String sql = "SELECT MaGhe FROM VePhim WHERE MaSuat = ?";
             PreparedStatement pst = con.prepareStatement(sql);
             pst.setString(1, maSuat);
-            
             ResultSet rs = pst.executeQuery();
             while (rs.next()) {
                 dsGhe.add(rs.getString("MaGhe")); 
@@ -89,14 +98,12 @@ public class HoaDonDAO {
             String sql = "SELECT * FROM HoaDon ORDER BY NgayLap DESC"; 
             PreparedStatement pst = con.prepareStatement(sql);
             ResultSet rs = pst.executeQuery();
-            
             while (rs.next()) {
                 String maHD = rs.getString("MaHD");
                 String maNV = rs.getString("MaNV");
                 String ngay = rs.getString("NgayLap");
                 double tong = rs.getDouble("TongTien");
                 String maKH = rs.getString("MaKH"); 
-                
                 dsHD.add(new HoaDon(maHD, maNV, ngay, tong, maKH));
             }
         } catch (Exception e) {
@@ -113,14 +120,8 @@ public class HoaDonDAO {
             PreparedStatement pst = con.prepareStatement(sql);
             pst.setString(1, maHD);
             ResultSet rs = pst.executeQuery();
-            
             while (rs.next()) {
-                int maVe = rs.getInt("MaVe");
-                String mHD = rs.getString("MaHD");
-                String maSuat = rs.getString("MaSuat");
-                String maGhe = rs.getString("MaGhe");
-                double gia = rs.getDouble("GiaVe");
-                dsVe.add(new VePhim(maVe, mHD, maSuat, maGhe, gia));
+                dsVe.add(new VePhim(rs.getInt("MaVe"), rs.getString("MaHD"), rs.getString("MaSuat"), rs.getString("MaGhe"), rs.getDouble("GiaVe")));
             }
         } catch (Exception e) {
             e.printStackTrace();
