@@ -122,8 +122,8 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         pnlFilters.setOpaque(false);
         
         cboPhim = createStyledComboBox(220);
-        cboNgay = createStyledComboBox(140);
-        cboSuatChieu = createStyledComboBox(140);
+        cboNgay = createStyledComboBox(220);
+        cboSuatChieu = createStyledComboBox(220);
         
         pnlFilters.add(taoWrapCombo("1. CHỌN PHIM:", cboPhim));
         pnlFilters.add(taoWrapCombo("2. CHỌN NGÀY:", cboNgay));
