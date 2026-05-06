@@ -38,7 +38,6 @@ public class PNL_BanVe extends JPanel implements ActionListener {
     private ArrayList<String> gheDangChon = new ArrayList<>();
     private double giaVeHienTai = 80000; 
     
-    // --- FIX: CỜ CHẶN RESET DỮ LIỆU ---
     private boolean isTuDongChon = false;
     
     private HoaDonDAO hoaDonDAO = new HoaDonDAO();
@@ -259,14 +258,13 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         btnThanhToan.addActionListener(this);
         btnHuy.addActionListener(this);
         
-        // --- FIX: CẢM BIẾN TẢI LẠI TRANG CHỈ KHI KHÔNG TỰ ĐỘNG CHỌN ---
         this.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentShown(ComponentEvent e) {
                 if (isTuDongChon) {
-                    isTuDongChon = false; // Tắt cờ, không reset data
+                    isTuDongChon = false; 
                 } else {
-                    loadDuLieuVaoBoNho(); // Nếu bấm thủ công vào tab Bán Vé thì nạp mới
+                    loadDuLieuVaoBoNho(); 
                 }
             }
         });
@@ -536,8 +534,10 @@ public class PNL_BanVe extends JPanel implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == btnHuy) {
-            resetSoDoGhe(); 
+            // --- FIX: GỌI loadGheTheoSuat ĐỂ TRẢ LẠI TRẠNG THÁI KHÓA CHO GHẾ ĐÃ BÁN ---
+            loadGheTheoSuat(); 
             txtMaKH.setText(""); 
+            
         } else if (e.getSource() == btnThanhToan) {
             if (gheDangChon.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Vui lòng chọn ít nhất 1 ghế!");
@@ -603,10 +603,9 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         }
     }
     
-    // --- FIX: THIẾT LẬP CỜ CHẶN RESET KHI TỰ ĐỘNG CHỌN TỪ SUẤT CHIẾU ---
     public void tuDongChonSuat(String tenPhim, String ngayChieuYYYYMMDD, String maSuat) {
-        isTuDongChon = true; // Bật cờ chặn ComponentShown
-        loadDuLieuVaoBoNho(); // Đổ Data mới lên trước
+        isTuDongChon = true; 
+        loadDuLieuVaoBoNho(); 
         
         try {
             java.time.LocalDate date = java.time.LocalDate.parse(ngayChieuYYYYMMDD);

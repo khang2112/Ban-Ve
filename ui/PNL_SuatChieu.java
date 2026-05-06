@@ -20,6 +20,7 @@ import com.toedter.calendar.JTextFieldDateEditor;
 import dao.SuatChieuDAO;
 import entity.SuatChieu;
 import entity.Phim;
+import entity.TaiKhoan;
 
 public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListener {
 	private JTextField txtMaSuat;
@@ -35,6 +36,9 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 	private JTable table;
 
 	private SuatChieuDAO suatChieuDAO;
+    
+    // --- BIẾN PHÂN QUYỀN ---
+    private boolean isAdmin = false;
 
 	private Color bgDark = new Color(18, 18, 18);
 	private Color bgPanel = new Color(30, 30, 30);
@@ -77,6 +81,14 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 		suatChieuDAO = new SuatChieuDAO(); 
 		phimDAO = new dao.PhimDAO();      
         hoaDonDAO = new dao.HoaDonDAO();
+        
+        // --- XÁC MINH QUYỀN TRUY CẬP NGAY KHI VÀO TRANG ---
+        TaiKhoan tk = this.ui_TrangChu.getTaiKhoanDangNhap();
+        if (tk != null) {
+            String role = tk.getVaiTro();
+            String user = tk.getTenDangNhap();
+            this.isAdmin = (user.equalsIgnoreCase("admin") || role.contains("QUẢN LÝ") || role.contains("MANAGER"));
+        }
 		
 		setLayout(new BorderLayout(15, 15));
 		setBackground(bgDark);
@@ -217,6 +229,24 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 
 		loadComboPhim();
 		loadDataToTable();
+        
+        // ========================================================
+        // FIX: THỰC THI LỆNH KHÓA TÍNH NĂNG NẾU LÀ NHÂN VIÊN
+        // ========================================================
+        if (!isAdmin) {
+            // Giấu sạch các nút Quản lý
+            btnThem.setVisible(false);
+            btnSua.setVisible(false);
+            btnXoa.setVisible(false);
+            btnXoaRong.setVisible(false);
+            
+            // Khóa mờ các ô nhập liệu để nhân viên khỏi táy máy
+            txtMaSuat.setEditable(false);
+            cboPhim.setEnabled(false);
+            cboPhong.setEnabled(false);
+            txtNgayChieu.setEnabled(false);
+            spnGioChieu.setEnabled(false);
+        }
 	}
 
 	private void loadComboPhim() {
@@ -462,6 +492,7 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 				spnGioChieu.setValue(java.sql.Time.valueOf(LocalTime.parse(gioStr)));
 			}
 
+            // Dù Admin hay Nhân viên thì khi click dòng đã có cũng bị khóa mã suất để an toàn
 			txtMaSuat.setEditable(false);
 			txtMaSuat.setBackground(new Color(60, 60, 60));
 		}
@@ -472,19 +503,16 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
 	@Override public void mouseEntered(MouseEvent e) {}
 	@Override public void mouseExited(MouseEvent e) {}
 	
-    // FIX: Tự động chọn đúng Combo Phim khi bấm từ Trang Chủ nhảy sang
 	public void locTheoPhim(String tenPhim) {
-        loadComboPhim(); // Đảm bảo danh sách phim mới nhất
+        loadComboPhim(); 
 		loadDataToTable(); 
         
-        // Lọc dữ liệu trên bảng
 	    for(int i = model.getRowCount() - 1; i >= 0; i--) {
 	        if(!model.getValueAt(i, 1).toString().equalsIgnoreCase(tenPhim)) {
 	            model.removeRow(i);
 	        }
 	    }
         
-        // Tự động set combobox đúng phim để tiện thêm suất chiếu
         for (int i = 0; i < cboPhim.getItemCount(); i++) {
             if (cboPhim.getItemAt(i).contains(tenPhim)) {
                 cboPhim.setSelectedIndex(i);
@@ -492,13 +520,15 @@ public class PNL_SuatChieu extends JPanel implements ActionListener, MouseListen
             }
         }
 
-        // --- ĐOẠN CODE BỔ SUNG ĐỂ MỞ KHÓA FORM ---
-        txtMaSuat.setText(""); 
-        txtMaSuat.setEditable(true); // Mở khóa ô nhập mã suất
-        txtMaSuat.setBackground(new Color(40, 40, 40)); // Trả lại màu nền bình thường
-        txtNgayChieu.setDate(null); // Xóa ngày cũ
-        spnGioChieu.setValue(java.sql.Time.valueOf("00:00:00")); // Reset giờ
-        if (cboPhong.getItemCount() > 0) cboPhong.setSelectedIndex(0);
-        table.clearSelection(); // Bỏ chọn dưới bảng
+        // --- NẾU LÀ ADMIN THÌ MỚI MỞ KHÓA Ô NHẬP LIỆU ---
+        if (isAdmin) {
+            txtMaSuat.setText(""); 
+            txtMaSuat.setEditable(true); 
+            txtMaSuat.setBackground(new Color(40, 40, 40)); 
+            txtNgayChieu.setDate(null); 
+            spnGioChieu.setValue(java.sql.Time.valueOf("00:00:00")); 
+            if (cboPhong.getItemCount() > 0) cboPhong.setSelectedIndex(0);
+        }
+        table.clearSelection(); 
 	}
 }
