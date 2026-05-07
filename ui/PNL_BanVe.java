@@ -11,6 +11,10 @@ import entity.TaiKhoan;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.print.PageFormat;
+import java.awt.print.Printable;
+import java.awt.print.PrinterException;
+import java.awt.print.PrinterJob;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.time.format.DateTimeFormatter;
@@ -75,25 +79,22 @@ public class PNL_BanVe extends JPanel implements ActionListener {
             int size = Math.min(getWidth(), getHeight());
             if (size == 0) return;
             
-            int blocks = 21; // QR chuẩn có lưới 21x21
+            int blocks = 21; 
             int blockSize = size / blocks;
-            int offset = (size - (blocks * blockSize)) / 2; // Căn giữa
+            int offset = (size - (blocks * blockSize)) / 2; 
             
             g.translate(offset, offset);
             g.setColor(Color.WHITE);
             g.fillRect(0, 0, blocks * blockSize, blocks * blockSize);
             g.setColor(Color.BLACK);
             
-            // Vẽ 3 ô định vị ở 3 góc (Đặc trưng của QR Code)
             drawPosSquare(g, 0, 0, blockSize);
             drawPosSquare(g, blocks - 7, 0, blockSize);
             drawPosSquare(g, 0, blocks - 7, blockSize);
             
-            // Dùng hashcode của chuỗi để sinh các chấm đen ngẫu nhiên nhưng cố định theo chuỗi
             java.util.Random rand = new java.util.Random(data.hashCode());
             for (int i = 0; i < blocks; i++) {
                 for (int j = 0; j < blocks; j++) {
-                    // Bỏ qua khu vực của 3 ô định vị
                     if ((i < 7 && j < 7) || (i > blocks - 8 && j < 7) || (i < 7 && j > blocks - 8)) continue;
                     if (rand.nextBoolean()) {
                         g.fillRect(i * blockSize, j * blockSize, blockSize, blockSize);
@@ -597,68 +598,95 @@ public class PNL_BanVe extends JPanel implements ActionListener {
     }
 
     // ========================================================
-    // TÍCH HỢP QUÉT MÃ QR SOÁT VÉ VÀO HÓA ĐƠN
+    // TÍCH HỢP QUÉT MÃ QR SOÁT VÉ VÀO HÓA ĐƠN ĐƯỢC CĂN LỀ CHUẨN
     // ========================================================
-    private void inHoaDon(String maHD, String suatInfo, String maKH, String tongTienStr) {
+    private void inHoaDon(String maHD, String maKH, String tongTienStr) {
+        String tenPhim = "";
+        String ngayChieu = "";
+        String gioChieu = "";
+        String phongChieu = "";
+        
+        if (!gheDangChon.isEmpty()) {
+            tenPhim = cboPhim.getSelectedItem().toString();
+            ngayChieu = cboNgay.getSelectedItem().toString();
+            String suatStr = cboSuatChieu.getSelectedItem().toString();
+            String[] parts = suatStr.split(" - ");
+            if (parts.length > 1) {
+                String[] timeRoom = parts[1].split(" \\(");
+                gioChieu = timeRoom[0].trim();
+                if (timeRoom.length > 1) {
+                    phongChieu = timeRoom[1].replace(")", "").trim();
+                }
+            }
+        }
+
         StringBuilder sb = new StringBuilder();
         sb.append("==========================================\n");
-        sb.append("                CINEMA POS                \n");
-        sb.append("            HÓA ĐƠN THANH TOÁN            \n");
+        sb.append("             CINEMA POS STAR              \n");
+        sb.append("          VÉ XEM PHIM & HÓA ĐƠN           \n");
         sb.append("==========================================\n");
-        sb.append("Mã HĐ: ").append(maHD).append("\n");
-        sb.append("Ngày in: ").append(new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new Date())).append("\n");
-        if (!maKH.isEmpty()) sb.append("Thẻ Khách: ").append(maKH).append("\n");
+        sb.append(String.format(" Mã đặt vé    : %s\n", maHD));
+        sb.append(String.format(" Thời gian in : %s\n", new SimpleDateFormat("dd/MM/yyyy HH:mm").format(new Date())));
+        if (!maKH.isEmpty()) sb.append(String.format(" Thẻ Khách    : %s\n", maKH));
         sb.append("------------------------------------------\n");
         
         if (!gheDangChon.isEmpty()) {
-            sb.append("CHI TIẾT VÉ PHIM:\n").append(suatInfo).append("\n"); 
-            sb.append("Vị trí ghế: ").append(String.join(", ", gheDangChon)).append("\n");
-            sb.append("Số lượng:   ").append(gheDangChon.size()).append(" vé\n");
+            sb.append(" 🎬 PHIM: ").append(tenPhim.toUpperCase()).append("\n\n");
+            sb.append(String.format(" %-14s : %s\n", "Ngày chiếu", ngayChieu));
+            sb.append(String.format(" %-14s : %s\n", "Giờ chiếu", gioChieu));
+            sb.append(String.format(" %-14s : %s\n", "Phòng chiếu", phongChieu));
+            sb.append(String.format(" %-14s : %02d\n", "Số lượng vé", gheDangChon.size()));
+            sb.append(String.format(" %-14s : %s\n", "VỊ TRÍ GHẾ", String.join(", ", gheDangChon)));
+            sb.append("------------------------------------------\n");
         }
         
         if (!gioHangDV.isEmpty()) {
-            sb.append("\nCHI TIẾT DỊCH VỤ (BẮP/NƯỚC):\n");
+            sb.append(" 🍿 THỨC ĂN KÈM (F&B):\n");
             NumberFormat nf = NumberFormat.getInstance(new Locale("vi", "VN"));
             for(Object[] data : gioHangDV.values()) {
-                sb.append("- ").append(data[2]).append("\n  SL: ").append(data[0])
-                  .append("  | Thành tiền: ").append(nf.format((double)data[1] * (int)data[0])).append("\n");
+                String tenDV = (String) data[2];
+                int sl = (int) data[0];
+                double tien = (double)data[1] * sl;
+                sb.append(String.format("  %02d x %-25s\n", sl, (tenDV.length() > 25 ? tenDV.substring(0, 22) + "..." : tenDV)));
+                sb.append(String.format("       %-24s %10s\n", "", nf.format(tien)));
             }
+            sb.append("------------------------------------------\n");
         }
         
-        sb.append("------------------------------------------\n");
-        sb.append("Tạm tính:                   ").append(lblTamTinh.getText()).append("\n");
+        sb.append(String.format(" %-20s %19s\n", "Tạm tính:", lblTamTinh.getText()));
         if (phanTramGiam > 0) {
-            sb.append("Giảm giá Voucher:          ").append(lblTienGiam.getText()).append("\n");
+            sb.append(String.format(" %-20s %19s\n", "Giảm giá:", lblTienGiam.getText()));
         }
-        sb.append("TỔNG TIỀN:                  ").append(tongTienStr).append("\n");
+        sb.append("==========================================\n");
+        sb.append(String.format(" %-15s %24s\n", "TỔNG CỘNG:", tongTienStr));
         sb.append("==========================================\n");
 
         JTextArea txtBill = new JTextArea(sb.toString());
-        txtBill.setFont(new Font("Monospaced", Font.BOLD, 13)); 
+        txtBill.setFont(new Font("Monospaced", Font.BOLD, 14)); 
         txtBill.setEditable(false);
         txtBill.setBackground(Color.WHITE);
         txtBill.setForeground(Color.BLACK);
+        txtBill.setBorder(new EmptyBorder(10, 10, 0, 10));
 
-        // Tạo Panel chính chứa Text Bill + Hình ảnh QR Code Soát Vé ở dưới cùng
         JPanel pnlInBill = new JPanel(new BorderLayout());
         pnlInBill.setBackground(Color.WHITE);
         pnlInBill.add(txtBill, BorderLayout.CENTER);
 
-        // Khởi tạo Mã QR Soát Vé bằng FakeQRCode 
         JPanel pnlQRFooter = new JPanel(new BorderLayout());
         pnlQRFooter.setBackground(Color.WHITE);
-        pnlQRFooter.setBorder(new EmptyBorder(10, 0, 10, 0));
+        pnlQRFooter.setBorder(new EmptyBorder(10, 0, 20, 0));
         
         FakeQRCode qrSoatVe = new FakeQRCode(maHD); 
-        qrSoatVe.setPreferredSize(new Dimension(120, 120)); 
+        qrSoatVe.setPreferredSize(new Dimension(140, 140)); 
         
         JPanel qrWrap = new JPanel();
         qrWrap.setBackground(Color.WHITE);
         qrWrap.add(qrSoatVe);
         
-        JLabel lblCheck = new JLabel("Dùng mã này để qua cổng soát vé", SwingConstants.CENTER);
-        lblCheck.setFont(new Font("Segoe UI", Font.BOLD | Font.ITALIC, 12));
-        lblCheck.setForeground(Color.BLACK);
+        JLabel lblCheck = new JLabel("<html><div style='text-align:center;'>Đưa mã này cho nhân viên soát vé<br>hoặc quét tại cổng tự động.</div></html>", SwingConstants.CENTER);
+        lblCheck.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        lblCheck.setForeground(Color.DARK_GRAY);
+        lblCheck.setBorder(new EmptyBorder(5, 0, 0, 0));
         
         pnlQRFooter.add(qrWrap, BorderLayout.CENTER);
         pnlQRFooter.add(lblCheck, BorderLayout.SOUTH);
@@ -666,18 +694,43 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         pnlInBill.add(pnlQRFooter, BorderLayout.SOUTH);
 
         JScrollPane scroll = new JScrollPane(pnlInBill);
-        scroll.setPreferredSize(new Dimension(380, 550));
-        scroll.getVerticalScrollBar().setUnitIncrement(16); // Lăn chuột mượt hơn
-        
+        scroll.setPreferredSize(new Dimension(420, 600)); 
+        scroll.getVerticalScrollBar().setUnitIncrement(16);
+        scroll.setBorder(null);
+
         Object[] options = {"In Hóa Đơn (Print)", "Đóng lại"};
         int choice = JOptionPane.showOptionDialog(this, scroll, "Hóa Đơn: " + maHD, JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
 
         if (choice == JOptionPane.YES_OPTION) {
-            try { txtBill.print(); } catch (Exception ex) {}
+            // FIX LỚN NHẤT: Bắt máy in in toàn bộ layout kể cả mã QR thay vì chỉ in Text
+            PrinterJob job = PrinterJob.getPrinterJob();
+            job.setPrintable(new Printable() {
+                public int print(Graphics pg, PageFormat pf, int pageNum) {
+                    if (pageNum > 0) return Printable.NO_SUCH_PAGE;
+                    Graphics2D g2 = (Graphics2D) pg;
+                    g2.translate(pf.getImageableX(), pf.getImageableY());
+                    
+                    // Tự động thu nhỏ tỷ lệ nếu khổ giấy in nhỏ hơn Bill
+                    double scaleX = pf.getImageableWidth() / pnlInBill.getWidth();
+                    if (scaleX < 1.0) {
+                        g2.scale(scaleX, scaleX);
+                    }
+                    pnlInBill.print(g2);
+                    return Printable.PAGE_EXISTS;
+                }
+            });
+            boolean doPrint = job.printDialog();
+            if (doPrint) {
+                try {
+                    job.print();
+                } catch (PrinterException ex) {
+                    JOptionPane.showMessageDialog(this, "Lỗi máy in: " + ex.getMessage());
+                }
+            }
         }
     }
 
-    private void hienThiCuaSoThanhToan(String maHD, String maSuat, String suatInfo, String maKH) {
+    private void hienThiCuaSoThanhToan(String maHD, String maKH) {
         JDialog dialog = new JDialog(ui_TrangChu, "Chọn Hình Thức Thanh Toán", true);
         dialog.setSize(450, 420);
         dialog.setLocationRelativeTo(this);
@@ -688,7 +741,6 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         JPanel pnlCards = new JPanel(cardLayout);
         pnlCards.setOpaque(false);
 
-        // --- Card 1: Chọn Phương Thức ---
         JPanel pnlChon = new JPanel(new BorderLayout(0, 30));
         pnlChon.setOpaque(false);
         pnlChon.setBorder(new EmptyBorder(40, 30, 40, 30));
@@ -717,7 +769,6 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         pnlButtons.add(btnChuyenKhoan);
         pnlChon.add(pnlButtons, BorderLayout.CENTER);
 
-        // --- Card 2: Quét Mã QR Momo/Bank ---
         JPanel pnlQR = new JPanel(new BorderLayout(0, 10));
         pnlQR.setOpaque(false);
         pnlQR.setBorder(new EmptyBorder(20, 20, 20, 20));
@@ -727,7 +778,6 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         lblQRTitle.setForeground(Color.WHITE);
         pnlQR.add(lblQRTitle, BorderLayout.NORTH);
 
-        // Gọi class FakeQRCode vẽ mã QR Bank động dựa trên số tiền
         FakeQRCode qrBank = new FakeQRCode("BANK_TRANSFER_" + lblTongTien.getText());
         qrBank.setPreferredSize(new Dimension(180, 180));
         qrBank.setBorder(new LineBorder(new Color(52, 152, 219), 3));
@@ -741,7 +791,7 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         pnlQRButtons.setOpaque(false);
         
         PosButton btnQuayLai = new PosButton("QUAY LẠI", new Color(100, 100, 100), Color.WHITE);
-        PosButton btnXacNhanTien = new PosButton(" ĐÃ NHẬN TIỀN", new Color(229, 9, 20), Color.WHITE);
+        PosButton btnXacNhanTien = new PosButton("ĐÃ NHẬN TIỀN", new Color(229, 9, 20), Color.WHITE);
         btnQuayLai.setPreferredSize(new Dimension(120, 40));
         btnXacNhanTien.setPreferredSize(new Dimension(180, 40));
 
@@ -753,38 +803,36 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         pnlCards.add(pnlQR, "MaQR");
         dialog.add(pnlCards, BorderLayout.CENTER);
 
-        // 1. Tiền Mặt -> Xử lý lưu luôn
         btnTienMat.addActionListener(e -> {
             dialog.dispose();
-            thucHienLuuThanhToan(maHD, maSuat, suatInfo, maKH);
+            thucHienLuuThanhToan(maHD, maKH);
         });
 
-        // 2. Chuyển Khoản -> Lật sang trang QR
         btnChuyenKhoan.addActionListener(e -> {
             cardLayout.show(pnlCards, "MaQR");
         });
 
-        // 3. Quay Lại 
         btnQuayLai.addActionListener(e -> {
             cardLayout.show(pnlCards, "ChonHinhThuc");
         });
 
-        // 4. Xác nhận đã nhận tiền QR
         btnXacNhanTien.addActionListener(e -> {
             dialog.dispose();
-            thucHienLuuThanhToan(maHD, maSuat, suatInfo, maKH);
+            thucHienLuuThanhToan(maHD, maKH);
         });
 
         dialog.setVisible(true);
     }
 
-    private void thucHienLuuThanhToan(String maHD, String maSuat, String suatInfo, String maKH) {
+    private void thucHienLuuThanhToan(String maHD, String maKH) {
         String maNV = (ui_TrangChu != null && ui_TrangChu.getTaiKhoanDangNhap() != null) ? ui_TrangChu.getTaiKhoanDangNhap().getTenDangNhap() : "admin";
+        String maSuat = cboSuatChieu.getSelectedIndex() != -1 ? cboSuatChieu.getSelectedItem().toString().split(" - ")[0] : "";
+        
         boolean isSuccess = hoaDonDAO.thanhToanHoaDon(maHD, maNV, maSuat, gheDangChon, giaVeHienTai, maKH, gioHangDV, tienGiamGia);
         
         if (isSuccess) {
             JOptionPane.showMessageDialog(this, "Thanh toán thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
-            inHoaDon(maHD, suatInfo, maKH, lblTongTien.getText());
+            inHoaDon(maHD, maKH, lblTongTien.getText());
             
             txtMaKH.setText(""); txtMaGiamGia.setText(""); 
             phanTramGiam = 0; gioHangDV.clear(); loadGheTheoSuat(); 
@@ -811,15 +859,8 @@ public class PNL_BanVe extends JPanel implements ActionListener {
             }
             
             String maHD = "HD" + new SimpleDateFormat("HHmmss").format(new Date());
-            String maSuat = "";
-            String suatInfo = "";
-            
-            if (!gheDangChon.isEmpty()) {
-                if (cboSuatChieu.getSelectedIndex() == -1) {
-                    JOptionPane.showMessageDialog(this, "Vui lòng chọn suất chiếu hợp lệ cho vé!"); return;
-                }
-                maSuat = cboSuatChieu.getSelectedItem().toString().split(" - ")[0]; 
-                suatInfo = cboPhim.getSelectedItem().toString() + "\nNgày: " + cboNgay.getSelectedItem().toString() + "\nSuất: " + cboSuatChieu.getSelectedItem().toString();
+            if (!gheDangChon.isEmpty() && cboSuatChieu.getSelectedIndex() == -1) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn suất chiếu hợp lệ cho vé!"); return;
             }
             
             String maKH = txtMaKH.getText().trim();
@@ -827,7 +868,7 @@ public class PNL_BanVe extends JPanel implements ActionListener {
                 JOptionPane.showMessageDialog(this, "Mã khách hàng không tồn tại!", "Lỗi", JOptionPane.ERROR_MESSAGE); return; 
             }
             
-            hienThiCuaSoThanhToan(maHD, maSuat, suatInfo, maKH);
+            hienThiCuaSoThanhToan(maHD, maKH);
         }
     }
     
