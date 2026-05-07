@@ -182,6 +182,7 @@ public class UI_DangNhap extends JFrame implements ActionListener {
         
         // Nhấn Enter ở ô mật khẩu cũng tự đăng nhập
         txtPass.addActionListener(e -> btnLogin.doClick());
+        txtUser.addActionListener(e -> txtPass.requestFocus());
     }
 
     @Override

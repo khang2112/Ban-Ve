@@ -148,4 +148,32 @@ public class HoaDonDAO {
         } catch (Exception e) {}
         return dsVe;
     }
+    
+    public double getTongDoanhThuTheoThang(int thang, int nam) {
+        double tong = 0;
+        String sql = "SELECT SUM(TongTien) FROM HoaDon WHERE MONTH(NgayLap) = ? AND YEAR(NgayLap) = ?";
+        
+        try {
+            // Lấy connection dùng chung nhưng KHÔNG bỏ vào trong ngoặc của khối try()
+            java.sql.Connection con = connect.Database.getInstance().getConnection();
+            java.sql.PreparedStatement pstmt = con.prepareStatement(sql);
+            
+            pstmt.setInt(1, thang);
+            pstmt.setInt(2, nam);
+            java.sql.ResultSet rs = pstmt.executeQuery();
+            
+            if (rs.next()) {
+                tong = rs.getDouble(1);
+            }
+            
+            // Chỉ đóng ResultSet và PreparedStatement, TUYỆT ĐỐI KHÔNG ĐÓNG Connection
+            rs.close();
+            pstmt.close();
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        return tong;
+    }
 }

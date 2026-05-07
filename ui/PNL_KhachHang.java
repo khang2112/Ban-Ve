@@ -172,6 +172,12 @@ public class PNL_KhachHang extends JPanel implements ActionListener, MouseListen
         btnXoaRong.addActionListener(this);
         table.addMouseListener(this);
         
+        txtMa.addActionListener(e -> txtTen.requestFocus());
+        txtTen.addActionListener(e -> txtSDT.requestFocus());
+        txtSDT.addActionListener(e -> txtDiem.requestFocus());
+
+
+        
         // --- FIX: CẢM BIẾN TỰ ĐỘNG TẢI LẠI ĐIỂM ---
         this.addComponentListener(new ComponentAdapter() {
             @Override
@@ -212,8 +218,8 @@ public class PNL_KhachHang extends JPanel implements ActionListener, MouseListen
             JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ Mã, Tên và Số điện thoại!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
             return false;
         }
-        if (ma.contains(" ")) {
-            JOptionPane.showMessageDialog(this, "Mã khách hàng không được chứa khoảng trắng!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+        if (ma.contains("^KH\\d{3}$")) {
+            JOptionPane.showMessageDialog(this, "Mã khách hàng không được chứa khoảng trắng!, bắt đầu bằng KH", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
             txtMa.requestFocus();
             return false;
         }
@@ -222,8 +228,8 @@ public class PNL_KhachHang extends JPanel implements ActionListener, MouseListen
             txtTen.requestFocus();
             return false;
         }
-        if (!sdt.matches("\\d{3}-\\d{6}")) {
-            JOptionPane.showMessageDialog(this, "Số điện thoại phải nhập đúng định dạng XXX-YYYYYY\n(Ví dụ: 090-123456)", "Lỗi định dạng", JOptionPane.ERROR_MESSAGE);
+        if (!sdt.matches("^(03|07|09)\\d{8}$")) {
+            JOptionPane.showMessageDialog(this, "Số điện thoại phải nhập đúng định dạng (03|07|09)\n(Ví dụ: 0906123456)", "Lỗi định dạng", JOptionPane.ERROR_MESSAGE);
             txtSDT.requestFocus();
             return false;
         }

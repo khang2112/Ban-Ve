@@ -1,12 +1,15 @@
 package ui;
 
+import dao.HoaDonDAO;
 import dao.ThongKeDAO;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.RoundRectangle2D;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Locale;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -21,9 +24,9 @@ public class PNL_ThongKe extends JPanel {
     private JTable tblXepHang;
     private ThongKeDAO thongKeDAO;
     private CustomBarChart barChart;
-    
+    private JLabel lblSoSanh;
     private JComboBox<String> cboNgay, cboThang, cboNam, cboTheLoai;
-    private PosButton btnLoc; // CHUYỂN SANG DÙNG NÚT BO GÓC CAO CẤP
+    private PosButton btnLoc;
 
     // --- LỚP NÚT BẤM CAO CẤP ---
     class PosButton extends JButton {
@@ -163,7 +166,6 @@ public class PNL_ThongKe extends JPanel {
         
         cboTheLoai = createComboBox(new String[]{"Tất cả thể loại", "Hành động", "Tâm lý", "Tình cảm", "Khoa học viễn tưởng", "Hài hước", "Kinh dị", "Hoạt hình"});
 
-        // --- CẬP NHẬT NÚT BẤM CHO RÕ RÀNG VÀ CHUYÊN NGHIỆP ---
         btnLoc = new PosButton(" ÁP DỤNG BỘ LỌC ", new Color(229, 9, 20), Color.WHITE);
         btnLoc.setPreferredSize(new Dimension(180, 35));
         
@@ -187,8 +189,15 @@ public class PNL_ThongKe extends JPanel {
         pnlCards.setOpaque(false);
         pnlCards.setPreferredSize(new Dimension(0, 100));
 
+        // --- KHU VỰC SỬA LỖI LBLSOSANH ---
         lblTongDoanhThu = new JLabel("0 VNĐ", JLabel.LEFT);
-        pnlCards.add(createSummaryCard("TỔNG DOANH THU", lblTongDoanhThu, new Color(46, 204, 113)));
+        lblSoSanh = new JLabel("Đang tính toán...");
+        lblSoSanh.setFont(new Font("Segoe UI", Font.ITALIC, 13)); 
+        lblSoSanh.setForeground(Color.LIGHT_GRAY);
+        
+        JPanel cardDoanhThu = createSummaryCard("TỔNG DOANH THU", lblTongDoanhThu, new Color(46, 204, 113));
+        cardDoanhThu.add(lblSoSanh, BorderLayout.SOUTH); // NHÉT lblSoSanh VÀO ĐÂY!
+        pnlCards.add(cardDoanhThu);
 
         lblTongSoVe = new JLabel("0 Vé", JLabel.LEFT);
         pnlCards.add(createSummaryCard("SỐ VÉ ĐÃ BÁN", lblTongSoVe, new Color(52, 152, 219)));
@@ -231,7 +240,6 @@ public class PNL_ThongKe extends JPanel {
         };
         tblXepHang = new JTable(modelXepHang);
         
-        // --- CHỈNH SỬA GIAO DIỆN BẢNG ĐẸP VÀ SANG TRỌNG HƠN ---
         tblXepHang.setRowHeight(40);
         tblXepHang.setBackground(new Color(35, 35, 35));
         tblXepHang.setForeground(Color.WHITE);
@@ -252,7 +260,6 @@ public class PNL_ThongKe extends JPanel {
             tblXepHang.getColumnModel().getColumn(i).setHeaderRenderer(headerRenderer);
         }
 
-        // Căn phải và Căn giữa
         DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
         rightRenderer.setHorizontalAlignment(JLabel.RIGHT);
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
@@ -261,7 +268,6 @@ public class PNL_ThongKe extends JPanel {
         tblXepHang.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
         tblXepHang.getColumnModel().getColumn(3).setCellRenderer(rightRenderer);
         
-        // --- RENDERER ĐẶC BIỆT CHO CỘT HẠNG (MÀU VÀNG/BẠC/ĐỒNG) ---
         DefaultTableCellRenderer rankRenderer = new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -270,12 +276,12 @@ public class PNL_ThongKe extends JPanel {
                 setFont(new Font("Segoe UI", Font.BOLD, 15));
                 String val = value.toString();
                 
-                if (val.equals("TOP 1")) setForeground(new Color(255, 215, 0)); // Vàng Gold
-                else if (val.equals("TOP 2")) setForeground(new Color(192, 192, 192)); // Bạc Silver
-                else if (val.equals("TOP 3")) setForeground(new Color(205, 127, 50)); // Đồng Bronze
-                else setForeground(new Color(150, 150, 150)); // Hạng khác màu xám
+                if (val.equals("TOP 1")) setForeground(new Color(255, 215, 0)); 
+                else if (val.equals("TOP 2")) setForeground(new Color(192, 192, 192)); 
+                else if (val.equals("TOP 3")) setForeground(new Color(205, 127, 50)); 
+                else setForeground(new Color(150, 150, 150)); 
 
-                if (isSelected) setForeground(Color.WHITE); // Giữ chữ trắng nếu đang click vào
+                if (isSelected) setForeground(Color.WHITE); 
                 return c;
             }
         };
@@ -328,18 +334,18 @@ public class PNL_ThongKe extends JPanel {
     }
 
     public void loadData() {
-    	String ngayStr = cboNgay.getSelectedItem().toString();
-    	int ngay = 0;
+        String ngayStr = cboNgay.getSelectedItem().toString();
+        int ngay = 0;
 
-    	if (!ngayStr.equals("Tất cả ngày")) {
-    	    ngay = Integer.parseInt(ngayStr.replace("Ngày ", "").trim());
-    	}  
-    	String thangStr = cboThang.getSelectedItem().toString();
-    	int thang = 0;
+        if (!ngayStr.equals("Tất cả ngày")) {
+            ngay = Integer.parseInt(ngayStr.replace("Ngày ", "").trim());
+        }  
+        String thangStr = cboThang.getSelectedItem().toString();
+        int thang = 0;
 
-    	if (!thangStr.equals("Tất cả tháng")) {
-    	    thang = Integer.parseInt(thangStr.replace("Tháng ", "").trim());
-    	}        
+        if (!thangStr.equals("Tất cả tháng")) {
+            thang = Integer.parseInt(thangStr.replace("Tháng ", "").trim());
+        }        
         String namStr = cboNam.getSelectedItem().toString();
         int nam = namStr.equals("Tất cả năm") ? 0 : Integer.parseInt(namStr);
         
@@ -381,6 +387,46 @@ public class PNL_ThongKe extends JPanel {
             barChart.updateChart(chartLabels, chartValues);
         } catch (Exception e) {
             System.err.println("Lỗi khi tải dữ liệu thống kê: " + e.getMessage());
+        }
+        
+        // --- CHỖ NÀY ĐÃ THÊM LỆNH GỌI HÀM CẬP NHẬT ---
+        capNhatSoSanhDoanhThu();
+    }
+    
+    public void capNhatSoSanhDoanhThu() {
+        HoaDonDAO hoaDonDAO = new HoaDonDAO();
+        Calendar cal = Calendar.getInstance();
+        
+        // 1. Lấy dữ liệu tháng hiện tại
+        int thangNay = cal.get(Calendar.MONTH) + 1;
+        int namNay = cal.get(Calendar.YEAR);
+        double doanhThuThangNay = hoaDonDAO.getTongDoanhThuTheoThang(thangNay, namNay);
+        
+        // 2. Tính toán tháng trước
+        cal.add(Calendar.MONTH, -1);
+        int thangTruoc = cal.get(Calendar.MONTH) + 1;
+        int namTruoc = cal.get(Calendar.YEAR);
+        double doanhThuThangTruoc = hoaDonDAO.getTongDoanhThuTheoThang(thangTruoc, namTruoc);
+        
+        // 3. Tính toán phần trăm tăng trưởng
+        double chenhLech = doanhThuThangNay - doanhThuThangTruoc;
+        double phanTram = 0;
+        if (doanhThuThangTruoc > 0) {
+            phanTram = (chenhLech / doanhThuThangTruoc) * 100;
+        }
+
+        // 4. Cập nhật giao diện
+        NumberFormat nf = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
+        
+        // Đảm bảo lblSoSanh đã được khởi tạo trước khi gọi setText
+        if (lblSoSanh != null) {
+            if (chenhLech >= 0) {
+                lblSoSanh.setText(String.format("↑ %s (+%.1f%%) so với tháng trước", nf.format(chenhLech), phanTram));
+                lblSoSanh.setForeground(new Color(46, 204, 113)); // Màu xanh lá - Lời
+            } else {
+                lblSoSanh.setText(String.format("↓ %s (%.1f%%) so với tháng trước", nf.format(Math.abs(chenhLech)), phanTram));
+                lblSoSanh.setForeground(new Color(231, 76, 60)); // Màu đỏ - Lỗ
+            }
         }
     }
 }

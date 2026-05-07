@@ -209,6 +209,12 @@ public class PNL_NhanVien extends JPanel implements ActionListener, MouseListene
         btnXoaRong.addActionListener(this);
         btnTim.addActionListener(this); 
         table.addMouseListener(this);
+        
+        txtMa.addActionListener(e -> txtHo.requestFocus());
+        txtHo.addActionListener(e -> txtTen.requestFocus());
+        txtTen.addActionListener(e -> txtTuoi.requestFocus());
+        txtTuoi.addActionListener(e -> txtLuong.requestFocus());
+
 
         loadDataToTable();
     }

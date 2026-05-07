@@ -5,9 +5,9 @@ public class Phim {
     private String tenPhim;
     private String theLoai;
     private double giaVe;
-    private String hinhAnh; // Bổ sung biến lưu đường dẫn ảnh
+    private String hinhAnh; 
 
-    // Constructor đầy đủ 5 tham số
+
     public Phim(String maPhim, String tenPhim, String theLoai, double giaVe, String hinhAnh) {
         this.maPhim = maPhim;
         this.tenPhim = tenPhim;
@@ -16,7 +16,6 @@ public class Phim {
         this.hinhAnh = hinhAnh;
     }
 
-    // Constructor 4 tham số (Dự phòng cho các code cũ chưa có ảnh)
     public Phim(String maPhim, String tenPhim, String theLoai, double giaVe) {
         this.maPhim = maPhim;
         this.tenPhim = tenPhim;
