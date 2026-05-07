@@ -60,7 +60,55 @@ public class PNL_BanVe extends JPanel implements ActionListener {
     private ArrayList<SuatChieu> dsSuatChieuAll = new ArrayList<>();
     private ArrayList<DichVu> dsDichVuAll = new ArrayList<>();
 
-    // --- ĐÃ TĂNG ĐỘ BO TRÒN CHO GHẾ NGỒI ---
+    // ========================================================
+    // LỚP VẼ MÃ QR CỰC CHÂN THỰC BẰNG JAVA 2D
+    // ========================================================
+    class FakeQRCode extends JPanel {
+        private String data;
+        public FakeQRCode(String data) {
+            this.data = data;
+            setBackground(Color.WHITE);
+        }
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            int size = Math.min(getWidth(), getHeight());
+            if (size == 0) return;
+            
+            int blocks = 21; // QR chuẩn có lưới 21x21
+            int blockSize = size / blocks;
+            int offset = (size - (blocks * blockSize)) / 2; // Căn giữa
+            
+            g.translate(offset, offset);
+            g.setColor(Color.WHITE);
+            g.fillRect(0, 0, blocks * blockSize, blocks * blockSize);
+            g.setColor(Color.BLACK);
+            
+            // Vẽ 3 ô định vị ở 3 góc (Đặc trưng của QR Code)
+            drawPosSquare(g, 0, 0, blockSize);
+            drawPosSquare(g, blocks - 7, 0, blockSize);
+            drawPosSquare(g, 0, blocks - 7, blockSize);
+            
+            // Dùng hashcode của chuỗi để sinh các chấm đen ngẫu nhiên nhưng cố định theo chuỗi
+            java.util.Random rand = new java.util.Random(data.hashCode());
+            for (int i = 0; i < blocks; i++) {
+                for (int j = 0; j < blocks; j++) {
+                    // Bỏ qua khu vực của 3 ô định vị
+                    if ((i < 7 && j < 7) || (i > blocks - 8 && j < 7) || (i < 7 && j > blocks - 8)) continue;
+                    if (rand.nextBoolean()) {
+                        g.fillRect(i * blockSize, j * blockSize, blockSize, blockSize);
+                    }
+                }
+            }
+            g.translate(-offset, -offset);
+        }
+        private void drawPosSquare(Graphics g, int x, int y, int bs) {
+            g.fillRect(x * bs, y * bs, 7 * bs, 7 * bs);
+            g.setColor(Color.WHITE); g.fillRect((x + 1) * bs, (y + 1) * bs, 5 * bs, 5 * bs);
+            g.setColor(Color.BLACK); g.fillRect((x + 2) * bs, (y + 2) * bs, 3 * bs, 3 * bs);
+        }
+    }
+
     class SeatButton extends JToggleButton {
         public SeatButton(String text) {
             super(text);
@@ -78,14 +126,12 @@ public class PNL_BanVe extends JPanel implements ActionListener {
             if (!isEnabled()) g2.setColor(new Color(229, 9, 20)); 
             else if (isSelected()) g2.setColor(new Color(46, 204, 113)); 
             else g2.setColor(new Color(60, 60, 60)); 
-            // Bo góc 20, 20 cho ghế mềm mại hơn
             g2.fillRoundRect(2, 2, getWidth() - 4, getHeight() - 4, 20, 20);
             g2.dispose();
             super.paintComponent(g); 
         }
     }
 
-    // --- ĐÃ TĂNG ĐỘ BO TRÒN CHO NÚT BẤM (GIAO DIỆN CAO CẤP) ---
     class PosButton extends JButton {
         private Color bgColor;
         public PosButton(String text, Color bg, Color fg) {
@@ -108,7 +154,6 @@ public class PNL_BanVe extends JPanel implements ActionListener {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setColor(getBackground() == null ? bgColor : getBackground());
-            // Tăng bán kính bo góc lên 25 để nút thon, mượt mà hơn
             g2.fillRoundRect(0, 0, getWidth(), getHeight(), 25, 25);
             g2.dispose();
             super.paintComponent(g);
@@ -121,7 +166,6 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         setBackground(new Color(18, 18, 18)); 
         setBorder(new EmptyBorder(15, 20, 15, 20));
 
-        // --- TOP FILTER ---
         JPanel pnlTop = new JPanel(new BorderLayout(10, 0));
         pnlTop.setOpaque(false);
         pnlTop.setBorder(new EmptyBorder(0, 0, 10, 0));
@@ -129,8 +173,8 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         JPanel pnlFilters = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
         pnlFilters.setOpaque(false);
         cboPhim = createStyledComboBox(220);
-        cboNgay = createStyledComboBox(140);
-        cboSuatChieu = createStyledComboBox(140);
+        cboNgay = createStyledComboBox(220);
+        cboSuatChieu = createStyledComboBox(220);
         pnlFilters.add(taoWrapCombo("1. CHỌN PHIM:", cboPhim));
         pnlFilters.add(taoWrapCombo("2. CHỌN NGÀY:", cboNgay));
         pnlFilters.add(taoWrapCombo("3. CHỌN SUẤT:", cboSuatChieu));
@@ -151,7 +195,6 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         pnlTop.add(pnlTopRight, BorderLayout.EAST);
         add(pnlTop, BorderLayout.NORTH);
 
-        // --- MÀN HÌNH GHẾ ---
         JPanel pnlCenter = new JPanel(new BorderLayout(0, 20));
         pnlCenter.setOpaque(false);
         JLabel lblScreen = new JLabel("M À N   H Ì N H", JLabel.CENTER);
@@ -177,19 +220,14 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         pnlCenter.add(pnlLegend, BorderLayout.SOUTH);
         add(pnlCenter, BorderLayout.CENTER);
 
-        // ==========================================
-        // KHU VỰC BÊN PHẢI (FIX LỖI MẤT NÚT)
-        // ==========================================
         JPanel pnlRight = new JPanel(new BorderLayout(0, 10));
         pnlRight.setOpaque(false);
-        // Tăng chiều rộng cột bên phải lên 460 để đảm bảo không rớt chữ/nút
         pnlRight.setPreferredSize(new Dimension(460, 0)); 
         pnlRight.setBorder(new EmptyBorder(0, 15, 0, 0)); 
 
         JPanel pnlCartWrapper = new JPanel(new BorderLayout(0, 10));
         pnlCartWrapper.setOpaque(false);
 
-        // THANH CÔNG CỤ BẮP NƯỚC (Dùng BorderLayout để cố định)
         JPanel pnlFNB = new JPanel(new BorderLayout(10, 0));
         pnlFNB.setOpaque(false);
         
@@ -212,7 +250,6 @@ public class PNL_BanVe extends JPanel implements ActionListener {
 
         pnlCartWrapper.add(taoWrapCombo("DỊCH VỤ ĐI KÈM (BẮP/NƯỚC):", pnlFNB), BorderLayout.NORTH);
 
-        // BẢNG GIỎ HÀNG
         String[] cartCols = {"Loại", "Sản phẩm / Ghế", "Thành tiền"};
         cartModel = new DefaultTableModel(cartCols, 0);
         tblCart = new JTable(cartModel);
@@ -240,12 +277,10 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         
         pnlRight.add(pnlCartWrapper, BorderLayout.CENTER);
 
-        // --- KHU VỰC THANH TOÁN ---
         JPanel pnlCheckout = new JPanel(new BorderLayout(0, 15));
         pnlCheckout.setBackground(new Color(35, 35, 35));
         pnlCheckout.setBorder(BorderFactory.createCompoundBorder(new LineBorder(new Color(60, 60, 60), 1), new EmptyBorder(15, 15, 15, 15)));
         
-        // Nhập Mã giảm giá
         JPanel pnlDiscount = new JPanel(new BorderLayout(10, 0));
         pnlDiscount.setOpaque(false);
         JLabel lblCode = new JLabel("Mã giảm giá:");
@@ -258,7 +293,7 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         txtMaGiamGia.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         
         btnApDungMa = new PosButton("ÁP DỤNG", new Color(212, 175, 55), Color.BLACK);
-        btnApDungMa.setPreferredSize(new Dimension(110, 35)); // Tăng một chút cho tròn đẹp
+        btnApDungMa.setPreferredSize(new Dimension(110, 35)); 
         
         pnlDiscount.add(lblCode, BorderLayout.WEST);
         pnlDiscount.add(txtMaGiamGia, BorderLayout.CENTER);
@@ -266,7 +301,6 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         
         pnlCheckout.add(pnlDiscount, BorderLayout.NORTH);
 
-        // Thông số tiền
         JPanel pnlCalc = new JPanel(new GridLayout(4, 2, 0, 8));
         pnlCalc.setOpaque(false);
         
@@ -289,19 +323,17 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         
         pnlCheckout.add(pnlCalc, BorderLayout.CENTER);
 
-        // Nút chốt đơn
         JPanel pnlActionBtns = new JPanel(new GridLayout(1, 2, 10, 0));
         pnlActionBtns.setOpaque(false);
         btnHuy = new PosButton("XÓA GIỎ", new Color(100, 100, 100), Color.WHITE);
         btnHuy.setPreferredSize(new Dimension(0, 45));
-        btnThanhToan = new PosButton("THANH TOÁN LƯU HĐ", new Color(229, 9, 20), Color.WHITE); 
+        btnThanhToan = new PosButton("THANH TOÁN", new Color(229, 9, 20), Color.WHITE); 
         pnlActionBtns.add(btnHuy); pnlActionBtns.add(btnThanhToan);
         pnlCheckout.add(pnlActionBtns, BorderLayout.SOUTH);
 
         pnlRight.add(pnlCheckout, BorderLayout.SOUTH);
         add(pnlRight, BorderLayout.EAST);
 
-        // --- SỰ KIỆN NÚT BẤM ---
         btnThanhToan.addActionListener(this);
         btnHuy.addActionListener(this);
         
@@ -321,7 +353,6 @@ public class PNL_BanVe extends JPanel implements ActionListener {
             }
         });
 
-        // SỰ KIỆN ÁP MÃ GIẢM GIÁ
         btnApDungMa.addActionListener(e -> {
             String code = txtMaGiamGia.getText().trim().toUpperCase();
             if (code.isEmpty()) {
@@ -403,24 +434,35 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         pnlSeatMap.removeAll();
         listGhế.clear();
         String[] hang = {"A", "B", "C", "D", "E", "F"};
+        
         for (int i = 0; i < hang.length; i++) {
             int gheSo = 1;
             for (int col = 0; col < 10; col++) {
-                if (col == 2 || col == 7) { pnlSeatMap.add(new JLabel("")); } 
+                if (col == 2 || col == 7) { 
+                    pnlSeatMap.add(new JLabel("")); 
+                } 
                 else {
                     String tenGhe = hang[i] + gheSo;
                     SeatButton btnGhe = new SeatButton(tenGhe); 
+                    
                     btnGhe.addActionListener(e -> {
-                        if (btnGhe.isSelected()) gheDangChon.add(tenGhe);
-                        else gheDangChon.remove(tenGhe);
+                        gheDangChon.clear();
+                        for (SeatButton b : listGhế) {
+                            if (b.isSelected()) {
+                                gheDangChon.add(b.getText());
+                            }
+                        }
                         capNhatGioHang();
                     });
-                    listGhế.add(btnGhe); pnlSeatMap.add(btnGhe);
+                    
+                    listGhế.add(btnGhe); 
+                    pnlSeatMap.add(btnGhe);
                     gheSo++;
                 }
             }
         }
-        pnlSeatMap.revalidate(); pnlSeatMap.repaint();
+        pnlSeatMap.revalidate(); 
+        pnlSeatMap.repaint();
     }
 
     private void xoaSuKienCombo() {
@@ -428,6 +470,7 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         for(ActionListener al : cboNgay.getActionListeners()) cboNgay.removeActionListener(al);
         for(ActionListener al : cboSuatChieu.getActionListeners()) cboSuatChieu.removeActionListener(al);
     }
+    
     private void themSuKienCombo() {
         cboPhim.addActionListener(e -> loadNgayTheoPhim());
         cboNgay.addActionListener(e -> loadSuatTheoNgay());
@@ -521,7 +564,6 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         int tongSP = 0;
         NumberFormat nf = NumberFormat.getInstance(new Locale("vi", "VN"));
         
-        // 1. In vé
         for (String ghe : gheDangChon) {
             String loaiGhe = ghe.startsWith("F") ? "VIP" : "Thường";
             double giaGheNay = ghe.startsWith("F") ? giaVeHienTai + 20000 : giaVeHienTai; 
@@ -530,7 +572,6 @@ public class PNL_BanVe extends JPanel implements ActionListener {
             tongSP++;
         }
         
-        // 2. In Dịch Vụ
         for (String maDV : gioHangDV.keySet()) {
             Object[] data = gioHangDV.get(maDV);
             int sl = (int) data[0];
@@ -542,7 +583,6 @@ public class PNL_BanVe extends JPanel implements ActionListener {
             tongSP += sl;
         }
         
-        // 3. Tính mã giảm giá
         tienGiamGia = tamTinh * (phanTramGiam / 100.0);
         double tongThanhToan = tamTinh - tienGiamGia;
         if (tongThanhToan < 0) tongThanhToan = 0;
@@ -556,6 +596,9 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         lblTongTien.setText(nf.format(tongThanhToan) + " đ");
     }
 
+    // ========================================================
+    // TÍCH HỢP QUÉT MÃ QR SOÁT VÉ VÀO HÓA ĐƠN
+    // ========================================================
     private void inHoaDon(String maHD, String suatInfo, String maKH, String tongTienStr) {
         StringBuilder sb = new StringBuilder();
         sb.append("==========================================\n");
@@ -589,18 +632,165 @@ public class PNL_BanVe extends JPanel implements ActionListener {
         }
         sb.append("TỔNG TIỀN:                  ").append(tongTienStr).append("\n");
         sb.append("==========================================\n");
-        sb.append("     CẢM ƠN QUÝ KHÁCH VÀ HẸN GẶP LẠI!     \n");
 
         JTextArea txtBill = new JTextArea(sb.toString());
         txtBill.setFont(new Font("Monospaced", Font.BOLD, 13)); 
         txtBill.setEditable(false);
-        JScrollPane scroll = new JScrollPane(txtBill);
-        scroll.setPreferredSize(new Dimension(380, 500));
+        txtBill.setBackground(Color.WHITE);
+        txtBill.setForeground(Color.BLACK);
+
+        // Tạo Panel chính chứa Text Bill + Hình ảnh QR Code Soát Vé ở dưới cùng
+        JPanel pnlInBill = new JPanel(new BorderLayout());
+        pnlInBill.setBackground(Color.WHITE);
+        pnlInBill.add(txtBill, BorderLayout.CENTER);
+
+        // Khởi tạo Mã QR Soát Vé bằng FakeQRCode 
+        JPanel pnlQRFooter = new JPanel(new BorderLayout());
+        pnlQRFooter.setBackground(Color.WHITE);
+        pnlQRFooter.setBorder(new EmptyBorder(10, 0, 10, 0));
+        
+        FakeQRCode qrSoatVe = new FakeQRCode(maHD); 
+        qrSoatVe.setPreferredSize(new Dimension(120, 120)); 
+        
+        JPanel qrWrap = new JPanel();
+        qrWrap.setBackground(Color.WHITE);
+        qrWrap.add(qrSoatVe);
+        
+        JLabel lblCheck = new JLabel("Dùng mã này để qua cổng soát vé", SwingConstants.CENTER);
+        lblCheck.setFont(new Font("Segoe UI", Font.BOLD | Font.ITALIC, 12));
+        lblCheck.setForeground(Color.BLACK);
+        
+        pnlQRFooter.add(qrWrap, BorderLayout.CENTER);
+        pnlQRFooter.add(lblCheck, BorderLayout.SOUTH);
+
+        pnlInBill.add(pnlQRFooter, BorderLayout.SOUTH);
+
+        JScrollPane scroll = new JScrollPane(pnlInBill);
+        scroll.setPreferredSize(new Dimension(380, 550));
+        scroll.getVerticalScrollBar().setUnitIncrement(16); // Lăn chuột mượt hơn
+        
         Object[] options = {"In Hóa Đơn (Print)", "Đóng lại"};
         int choice = JOptionPane.showOptionDialog(this, scroll, "Hóa Đơn: " + maHD, JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
 
         if (choice == JOptionPane.YES_OPTION) {
             try { txtBill.print(); } catch (Exception ex) {}
+        }
+    }
+
+    private void hienThiCuaSoThanhToan(String maHD, String maSuat, String suatInfo, String maKH) {
+        JDialog dialog = new JDialog(ui_TrangChu, "Chọn Hình Thức Thanh Toán", true);
+        dialog.setSize(450, 420);
+        dialog.setLocationRelativeTo(this);
+        dialog.setLayout(new BorderLayout());
+        dialog.getContentPane().setBackground(new Color(30, 30, 30));
+
+        CardLayout cardLayout = new CardLayout();
+        JPanel pnlCards = new JPanel(cardLayout);
+        pnlCards.setOpaque(false);
+
+        // --- Card 1: Chọn Phương Thức ---
+        JPanel pnlChon = new JPanel(new BorderLayout(0, 30));
+        pnlChon.setOpaque(false);
+        pnlChon.setBorder(new EmptyBorder(40, 30, 40, 30));
+
+        JLabel lblTitle = new JLabel("XÁC NHẬN THANH TOÁN", SwingConstants.CENTER);
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        lblTitle.setForeground(Color.WHITE);
+        
+        JLabel lblTotal = new JLabel("Cần thu: " + lblTongTien.getText(), SwingConstants.CENTER);
+        lblTotal.setFont(new Font("Segoe UI", Font.BOLD, 26));
+        lblTotal.setForeground(new Color(229, 9, 20));
+
+        JPanel pnlTitle = new JPanel(new GridLayout(2, 1));
+        pnlTitle.setOpaque(false);
+        pnlTitle.add(lblTitle);
+        pnlTitle.add(lblTotal);
+        pnlChon.add(pnlTitle, BorderLayout.NORTH);
+
+        JPanel pnlButtons = new JPanel(new GridLayout(2, 1, 0, 15));
+        pnlButtons.setOpaque(false);
+
+        PosButton btnTienMat = new PosButton("THANH TOÁN TIỀN MẶT", new Color(46, 204, 113), Color.WHITE);
+        PosButton btnChuyenKhoan = new PosButton("CHUYỂN KHOẢN (MÃ QR)", new Color(52, 152, 219), Color.WHITE);
+        
+        pnlButtons.add(btnTienMat);
+        pnlButtons.add(btnChuyenKhoan);
+        pnlChon.add(pnlButtons, BorderLayout.CENTER);
+
+        // --- Card 2: Quét Mã QR Momo/Bank ---
+        JPanel pnlQR = new JPanel(new BorderLayout(0, 10));
+        pnlQR.setOpaque(false);
+        pnlQR.setBorder(new EmptyBorder(20, 20, 20, 20));
+
+        JLabel lblQRTitle = new JLabel("Khách hàng quét mã để thanh toán", SwingConstants.CENTER);
+        lblQRTitle.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        lblQRTitle.setForeground(Color.WHITE);
+        pnlQR.add(lblQRTitle, BorderLayout.NORTH);
+
+        // Gọi class FakeQRCode vẽ mã QR Bank động dựa trên số tiền
+        FakeQRCode qrBank = new FakeQRCode("BANK_TRANSFER_" + lblTongTien.getText());
+        qrBank.setPreferredSize(new Dimension(180, 180));
+        qrBank.setBorder(new LineBorder(new Color(52, 152, 219), 3));
+        
+        JPanel pnlQRWrap = new JPanel(); 
+        pnlQRWrap.setOpaque(false);
+        pnlQRWrap.add(qrBank);
+        pnlQR.add(pnlQRWrap, BorderLayout.CENTER);
+
+        JPanel pnlQRButtons = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        pnlQRButtons.setOpaque(false);
+        
+        PosButton btnQuayLai = new PosButton("QUAY LẠI", new Color(100, 100, 100), Color.WHITE);
+        PosButton btnXacNhanTien = new PosButton(" ĐÃ NHẬN TIỀN", new Color(229, 9, 20), Color.WHITE);
+        btnQuayLai.setPreferredSize(new Dimension(120, 40));
+        btnXacNhanTien.setPreferredSize(new Dimension(180, 40));
+
+        pnlQRButtons.add(btnQuayLai);
+        pnlQRButtons.add(btnXacNhanTien);
+        pnlQR.add(pnlQRButtons, BorderLayout.SOUTH);
+
+        pnlCards.add(pnlChon, "ChonHinhThuc");
+        pnlCards.add(pnlQR, "MaQR");
+        dialog.add(pnlCards, BorderLayout.CENTER);
+
+        // 1. Tiền Mặt -> Xử lý lưu luôn
+        btnTienMat.addActionListener(e -> {
+            dialog.dispose();
+            thucHienLuuThanhToan(maHD, maSuat, suatInfo, maKH);
+        });
+
+        // 2. Chuyển Khoản -> Lật sang trang QR
+        btnChuyenKhoan.addActionListener(e -> {
+            cardLayout.show(pnlCards, "MaQR");
+        });
+
+        // 3. Quay Lại 
+        btnQuayLai.addActionListener(e -> {
+            cardLayout.show(pnlCards, "ChonHinhThuc");
+        });
+
+        // 4. Xác nhận đã nhận tiền QR
+        btnXacNhanTien.addActionListener(e -> {
+            dialog.dispose();
+            thucHienLuuThanhToan(maHD, maSuat, suatInfo, maKH);
+        });
+
+        dialog.setVisible(true);
+    }
+
+    private void thucHienLuuThanhToan(String maHD, String maSuat, String suatInfo, String maKH) {
+        String maNV = (ui_TrangChu != null && ui_TrangChu.getTaiKhoanDangNhap() != null) ? ui_TrangChu.getTaiKhoanDangNhap().getTenDangNhap() : "admin";
+        boolean isSuccess = hoaDonDAO.thanhToanHoaDon(maHD, maNV, maSuat, gheDangChon, giaVeHienTai, maKH, gioHangDV, tienGiamGia);
+        
+        if (isSuccess) {
+            JOptionPane.showMessageDialog(this, "Thanh toán thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+            inHoaDon(maHD, suatInfo, maKH, lblTongTien.getText());
+            
+            txtMaKH.setText(""); txtMaGiamGia.setText(""); 
+            phanTramGiam = 0; gioHangDV.clear(); loadGheTheoSuat(); 
+            if (ui_TrangChu != null) ui_TrangChu.capNhatSoLuongSuatChieu();
+        } else {
+            JOptionPane.showMessageDialog(this, "Lỗi kết nối CSDL!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -637,22 +827,7 @@ public class PNL_BanVe extends JPanel implements ActionListener {
                 JOptionPane.showMessageDialog(this, "Mã khách hàng không tồn tại!", "Lỗi", JOptionPane.ERROR_MESSAGE); return; 
             }
             
-            int confirm = JOptionPane.showConfirmDialog(this, "Xác nhận thanh toán?\nTổng: " + lblTongTien.getText(), "XÁC NHẬN", JOptionPane.YES_NO_OPTION);
-            if (confirm == JOptionPane.YES_OPTION) {
-                String maNV = (ui_TrangChu != null && ui_TrangChu.getTaiKhoanDangNhap() != null) ? ui_TrangChu.getTaiKhoanDangNhap().getTenDangNhap() : "admin";
-                
-                boolean isSuccess = hoaDonDAO.thanhToanHoaDon(maHD, maNV, maSuat, gheDangChon, giaVeHienTai, maKH, gioHangDV, tienGiamGia);
-                
-                if (isSuccess) {
-                    JOptionPane.showMessageDialog(this, "Thanh toán thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
-                    inHoaDon(maHD, suatInfo, maKH, lblTongTien.getText());
-                    txtMaKH.setText(""); txtMaGiamGia.setText(""); 
-                    phanTramGiam = 0; gioHangDV.clear(); loadGheTheoSuat(); 
-                    if (ui_TrangChu != null) ui_TrangChu.capNhatSoLuongSuatChieu();
-                } else {
-                    JOptionPane.showMessageDialog(this, "Lỗi kết nối CSDL!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                }
-            }
+            hienThiCuaSoThanhToan(maHD, maSuat, suatInfo, maKH);
         }
     }
     
