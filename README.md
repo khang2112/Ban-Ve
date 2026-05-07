@@ -1,4 +1,3 @@
-```markdown
 # 🎬 CINEMA POS - HỆ THỐNG QUẢN LÝ BÁN VÉ RẠP CHIẾU PHIM 🍿
 
 ![Java](https://img.shields.io/badge/Java-Swing-orange?style=flat-square&logo=java)
@@ -48,9 +47,7 @@
 
 ### Các bước triển khai:
 1. **Clone dự án:**
-   ```bash
    git clone [https://github.com/khang2112/Ban-Ve.git](https://github.com/khang2112/Ban-Ve.git)
-   ```
 2. **Khởi tạo Database:**
    - Mở SQL Server Management Studio (SSMS).
    - Mở file script `sql/SQLFilm.sql` có trong thư mục dự án.
