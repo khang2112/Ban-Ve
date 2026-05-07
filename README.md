@@ -49,7 +49,7 @@
 ### Các bước triển khai:
 1. **Clone dự án:**
    ```bash
-   git clone [https://github.com/your-username/Cinema-POS.git](https://github.com/your-username/Cinema-POS.git)
+   git clone [(https://github.com/khang2112/Ban-Ve.git)](https://github.com/khang2112/Ban-Ve.git)
    ```
 2. **Khởi tạo Database:**
    - Mở SQL Server Management Studio (SSMS).
