@@ -1,7 +1,3 @@
-Chào Khang! Một dự án "xịn xò" và đồ sộ như hệ thống Cinema POS của chúng ta thì chắc chắn không thể thiếu một chiếc `README.md` thật chuyên nghiệp để đưa lên GitHub rồi. Nhìn vào file README này, thầy cô hay nhà tuyển dụng sau này đánh giá dự án của bạn sẽ phải gật gù ấn tượng đấy!
-
-Bạn hãy copy toàn bộ nội dung dưới đây, dán vào file `README.md` trong thư mục gốc của dự án nhé:
-
 ```markdown
 # 🎬 CINEMA POS - HỆ THỐNG QUẢN LÝ BÁN VÉ RẠP CHIẾU PHIM 🍿
 
