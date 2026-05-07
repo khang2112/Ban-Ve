@@ -70,14 +70,16 @@ Hệ thống có sẵn các tài khoản mẫu với phân quyền khác nhau:
 ---
 
 ## 📸 ẢNH GIAO DIỆN CHƯƠNG TRÌNH
-*(Đừng quên thay thế các dòng chữ `link_anh_...` bên dưới bằng link ảnh thật của dự án bạn nhé)*
 
 - **Trang chủ & Bảng điều khiển:**
-  <img src="link_anh_trang_chu" width="800">
+  <img src="<img width="975" height="548" alt="image" src="https://github.com/user-attachments/assets/3df8880d-2b32-4127-9730-41cb28357e59" />
+" width="800">
 - **Giao diện Bán vé POS (Chọn ghế, bắp nước, áp mã giảm giá):**
-  <img src="link_anh_ban_ve" width="800">
+  <img src="<img width="975" height="548" alt="image" src="https://github.com/user-attachments/assets/85513784-09d4-4815-92e6-69dcbf307e06" />
+" width="800">
 - **Giao diện Quản lý Lịch chiếu:**
-  <img src="link_anh_lich_chieu" width="800">
+  <img src="<img width="975" height="548" alt="image" src="https://github.com/user-attachments/assets/b1c1325c-4638-4011-aeec-a18252286452" />
+" width="800">
 
 ---
 
